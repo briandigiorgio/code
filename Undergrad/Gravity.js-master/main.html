@@ -1,0 +1,210 @@
+<html>
+	<head>
+		<title>Gravity Sim (Mod)</title>
+		<script src="Gravity.min.js"></script>
+		<script src="Particle.min.js"></script>
+		<style>
+			body {
+				color: #ffffff;
+				font-family: Courier New;
+				font-size: 11px;
+			}
+			button {
+			  -webkit-border-radius: 0;
+			  -moz-border-radius: 0;
+			  border-radius: 0px;
+			  font-family: Courier New;
+			  color: #ffffff;
+			  font-size: 11px;
+			  background: #000000;
+			  padding: 5px 5px 5px 5px;
+			  border: solid #ffffff 1px;
+			  text-decoration: none;
+			  width: 88px;
+			  margin-top:2px;
+			}
+
+			.txt {
+			  -webkit-border-radius: 0;
+			  -moz-border-radius: 0;
+			  border-radius: 0px;
+			  font-family: Courier New;
+			  color: #ffffff;
+			  font-size: 11px;
+			  background: #000000;
+			  padding: 5px 5px 5px 5px;
+			  border: solid #ffffff 1px;
+			  text-decoration: none;
+			  margin-left:5px;
+			}
+
+			button:hover {
+			  background: #ffffff;
+			  color: #000000;
+			  text-decoration: none;
+			}
+			.noselect {
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+			#controlbox {
+				padding:5px;
+				padding-left:20px;
+				margin-left:-20px;
+				border: solid #ffffff 1px;
+				border-left-width: 0px;
+				width:88px;
+			}
+			#homebox {
+				font-size:20px;
+				position:absolute;
+				right:10px;
+				top:0px;
+				padding:5px;
+				padding-top:10px;
+				margin-top:-10px;
+				padding-right:10px;
+				margin-right:-10px;
+				padding-left:10px;
+				border:solid #ffffff 1px;
+				border-right-width:0px;
+			}
+			a:link {
+				color:#0080FF;
+			}
+			a:visited {
+				color:#0000FF;
+			}
+		</style>
+		<script>
+			var interval = -1;
+			var newParticleSize = 100;
+
+			function start(){
+				if(interval == -1){
+					interval = window.setInterval("main();",30);
+				}
+			}
+
+			function stop(){
+				clearInterval(interval);
+				interval = -1;
+			}
+
+            function generateProto(){
+                var pnum = 4000;
+                var pmass = 500;
+                var drad = 400;
+				for (var i = 0; i < pnum; i++){
+					var rand = Math.random()*2*Math.PI;
+					var rand2 = Math.random();
+					var x = (drad*rand2)*Math.cos(rand);
+					var y = (drad*rand2)*Math.sin(rand);
+                    var pr = Math.sqrt(x*x+y*y);
+					var pspeed = Math.sqrt(((pnum*pmass*pr*pr)/(drad*drad))/pr);
+					var particle = new Particle(pmass, width/2+x, height/2+y, Math.sin(rand)*pspeed, -Math.cos(rand)*pspeed);
+					particleList.push(particle);
+				}
+			}
+            
+			function generateSun(){
+                var pnum = 4000; // number of particles, adjust for CPU power
+                var pmass = 200; // mass of each particle
+                var drad = 400; // radius of protodisk, adjust for screen
+                var sunmass = 10*pmass*pnum // mass of sun, adjust for speed
+                var sun = new Particle(sunmass, width/2, height/2, 0, 0); 
+                particleList.push(sun);
+                var pcount = 0;
+//				for (var i = 0; i < pnum; i++){
+//                    
+//                    // choosing coordinates, finding radius from center
+//					var rand = Math.random()*2*Math.PI;
+//					var rand2 = Math.random()+0.1; // creates annulus
+//					var x = (drad*rand2)*Math.cos(rand);
+//					var y = (drad*rand2)*Math.sin(rand);
+//                    var pr = Math.sqrt(x*x+y*y);
+//                    
+//                    // calculating particle speed based on Kepler's third law
+//                    // v = sqrt((G*M(r))/r^2) 
+//                    //includes corrections for particle mass and annulus
+//					var pspeed = Math.sqrt((sunmass + ((pnum*pmass*pr*pr)/
+//                                ((drad*1.1)*(drad*1.1))))/pr);
+//					var particle = new Particle(pmass, width/2+x, height/2+y,
+//                                Math.sin(rand)*pspeed, -Math.cos(rand)*pspeed);
+//					particleList.push(particle);
+//				}
+//			}
+            
+            while (pcount < pnum) {
+                var x = (Math.random() * width) - width/2;
+                var y = (Math.random() * height) - height/2;
+                var pr = Math.sqrt((x * x) + (y * y));
+                if (pr <= drad * 1.1) {
+                    var pspeed = Math.sqrt((sunmass + ((pnum*pmass*pr*pr)/
+                                ((drad)*(drad))))/pr);
+					var particle = new Particle(pmass, width/2+x, height/2+y, (y/pr)*pspeed, -1 * (x/pr)*pspeed);
+					particleList.push(particle);
+                    pcount++;
+                } 
+            }
+            }
+            
+            function generateJupiter(){
+                var pnum = 4000;
+                var pmass = 200;
+                var drad = 400;
+                var sunmass = 10*pmass*pnum
+                var sun = new Particle(sunmass, width/2, height/2, 0, 0);
+                var jup = new Particle(sunmass * .001, width/2, height/2+drad/2, Math.sqrt((sunmass)/(drad/2)), 0);
+                particleList.push(sun);
+                particleList.push(jup);
+				for (var i = 0; i < pnum; i++){
+					var rand = Math.random()*2*Math.PI;
+					var rand2 = Math.random() + 0.1;
+					var x = (drad*rand2)*Math.cos(rand);
+					var y = (drad*rand2)*Math.sin(rand);
+                    var pr = Math.sqrt(x*x+y*y);
+					var pspeed = Math.sqrt((sunmass + ((pnum*pmass*pr*pr)/((drad*1.1)*(drad*1.1))))/pr);
+					var particle = new Particle(pmass, width/2+x, height/2+y, Math.sin(rand)*pspeed, -Math.cos(rand)*pspeed);
+					particleList.push(particle);
+            }
+            }
+
+			function setSize(size){
+				document.getElementById("mass").value=size.toExponential(1).replace("+","");
+				setNewMass(size);
+			}
+
+			function clearCanvas(){
+				particleList = [];
+			}
+		</script>
+	</head>
+	<body onload = "init();start();" style="background-color:black">
+		<div class="noselect">
+			Inspired by the classic <a href="http://www.nowykurier.com/toys/gravity/gravity.html">Gravity Toy</a> and rewritten in Javascript. </br>
+			Click and drag to add new particles. Hold shift and drag to translate.</br></br>
+			<div id="controlbox" style="z-index:4">
+				<table>
+					<tr>Mass:<input type="text" value="1.0e3" class="txt" style="width:50px;" id="mass"></tr></br>
+					<tr><button onclick="setSize(100)">Tiny</button></tr></br>
+					<tr><button onclick="setSize(1000)">Small</button></tr></br>
+					<tr><button onclick="setSize(10000)">Medium</button></tr></br>
+					<tr><button onclick="setSize(100000)">Huge</button></tr></br>
+					<tr><button onclick="setSize(1000000)">Enormous</button></tr>
+				</table>
+				<button onclick="start()">Start</button></br>
+				<button onclick="stop()">Stop</button></br>
+				<button onclick="generateProto()">Protodisk</button></br>
+                <button onclick="generateSun()">Solar System</button></br>
+                <button onclick="generateJupiter()">Jupiter System</button></br>
+				<button onclick="clearCanvas()">Clear</button></br>
+			</div>
+		</div>
+		<canvas id="canvas" style="z-index:-1;position:absolute;left: 0px;top: 0px;"></canvas>
+	</body>
+</html>

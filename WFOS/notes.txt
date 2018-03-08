@@ -1,0 +1,59 @@
+10/10
+1.create a grid of square pixels over the top of a gaussian psf, see how S/N
+changes with different pixel sizes
+  -keep total size of the grid to 1", see how much flux falls outside of grid
+    -maybe vary total grid size
+  -go from 1 large pixel to many smaller pixels
+  -use optimal extraction algorition from Naylor 1998
+  -use function of actual psf for optimal extraction
+  -use convolution instead of 2d integration: 
+    -convolve a square aperture with gaussian at pixel locations
+2. Do same thing with hexagonal aperture
+3. Fit the data to see how well the actual psf can be recovered
+
+11/22:
+-no noise on theoretical psf
+-apply sky noise and poisson error at same time on signal coming out of
+instrument
+
+
+12/13:
+-run a bunch of s/n simulations and look at the variance in the returned
+fluxes to see how it compares to reported error (snvar.py)
+  -calculated variance agrees well with observed variance, difference on the
+  order of 10
+  -flux from opt ext is less than flux from aperture, gulf gets larger with
+  more fibers
+  -S/N from aperture is actually better than from 
+-see if the opt ext sn is actuall 10% better than aperture (snvar.py)
+  -S/N from aperture is actually larger than the S/N from optext because the
+  flux is systematically larger and the variance is the same
+  -how do you calculate the s/n for an aperture sum? Something is wrong
+-make plot of sn for different fiber number for different flux compared
+to background (opt ext and aperture) (fluxcomp.py)
+  -more fibers leads to a much larger improvement in s/n for lower noise ratios
+  than for higher noise ratios
+  -aperture values don't behave as expected so are probably wrong
+
+1/10:
+-the value in the fluxcomp graph at fibers = 1 is 10000/sqrt(10000+noise^2),
+if you normalize by this you can see marginal gains for adding more fibers
+  -looks way too cluttered if you do that
+-also loglog that
+
+2/12:
+-slide for context on psf
+-slide for context on noise
+-hexagonal 1 bundle
+-raise psf resolution to see effect
+-say what being held constant and what is varying
+-rewrite noise in terms of what sky flux would result in
+that amount of random noise (noise^2)
+  -ratio of flux to sky background
+
+2/28:
+-focus on S/B of ~100
+-remake all graphs with fwhm on x axis ranging from .4-.9
+  -rectfwhm.py, fwhms100.png show expected results
+-expand range of pixel size to see if trend is what it should be on slit
+  -yep

@@ -1,0 +1,75 @@
+
+To Do:
+
+9/12:
+-take a slice of of M_i and plot some metric for bulge size vs. asymmetric
+drift for similar M_i
+  -find correlation with ranked correlation in scipy (spearman)
+-fit a line to M_i vs. AD and subtract away to find dAD, see how that changes
+with bulge size
+-if using a different catalog, must take plate number/IFU number and match up
+with ra/dec in DRPall file to get ra/dec of galaxy
+ -ra/dec may match up to different plate/ifu since some galaxies are observed
+multiple times
+
+10/1:
+-ad vs. sersic index 
+  -see if there is even a free variable
+  -at multple Re's
+-look ad profile in 5 different bins of absolute magnitude
+  -magnitude quintiles
+  -median/mean ad value at Re step
+
+10/24:
+-fix error using weighted standard deviation
+-look at colors of highest mass galaxies, see if color N-r correlates with AD
+-replot everything with ad/(ha rotation speed) harc_em
+-for a given Re, plot average bulge to total vs average ad in 5 mag bins
+
+10/31
+-kd tree, spherical match
+-sersic drpall vs sersic prob
+
+11/22
+-sersic drpall vs sersic prob, continue troubleshooting
+-remake adquints with stellar mass
+  -gives weird reversed graph
+-look at ad profiles for different quintiles
+
+2/12
+-bars
+-make fit line linear
+-look at diff between fit line for each and total
+-magnitude slices
+-gz2
+-pipe3d, firefly sloan vac mass profile
+  -mass contained with radius
+  -mass just at the radius
+  -nsa mag 
+ 
+Scicon 3/5:
+  -lihwai lin:
+    -enhancement of sfr for close galaxy pairs (ellison 08 sdss)
+    -lin 07 (deep2): not all interactions boost sfr
+    -cox 08: simulations show enhancement in sfr on first pass but mainly on
+    final merge
+    -merger classification 1-4
+      -1: approaching, no interaction yet
+      -2: right after first passage, tidal tails
+      -3: second approach, little distortion
+      -4: indistinguishable components
+    -main sequence: stellar surface brightness related to Ha surf bright
+      -class 1 agrees with main sequence for general galaxies, maybe some
+      suppression
+      -class 2 agreement, no enhancement
+      -more enhancement for class 3 and class 4
+    -post starburst galaxies/quenching:
+      -5 examples of post starburst spectrum in post merger galaxies out of
+      117, so rare
+      -mostly on outskirts/tidal tails, in late stage
+  -zheng zheng:
+    -FAST/TBT: proposal to follow up manga galaxies in 21cm, funding from
+    China, still in commissioning
+      -Karen Masters: observing, this wants to get postdocs/students
+  -Dave Stark
+     -GBT data: 2000 galaxies already, DR1 this summer
