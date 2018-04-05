@@ -38,9 +38,16 @@ multiple times
 
 2/12
 -bars
--make fit line linear
+  -no correlation (barad)
+-make fit line linear (liercut l=-17)
+  -cliers show steeper relation overall that sf
+  -in ad/h, cliers stay flat but sf trend upward at lower mag end
 -look at diff between fit line for each and total
--magnitude slices
+
+-magnitude slices (liercut)
+  -sfcl##: slices of higher magnitudes, wild variability but in general cliers
+  are steeper at high end especially in center (best seen in -21)
+  -sfcl##h: murkier in ad/h but still seen in -21 (suspicious) 
 -gz2
 -pipe3d, firefly sloan vac mass profile
   -mass contained with radius
@@ -73,3 +80,40 @@ Scicon 3/5:
       -Karen Masters: observing, this wants to get postdocs/students
   -Dave Stark
      -GBT data: 2000 galaxies already, DR1 this summer
+
+3/20
+-plot cut of bulge fraction with ad mag
+-plot hist of sf and cl, also plot means in mag bins
+  -no hist: lieravg(h).png liermean.py
+    -few differences except some dip in cliers in h in mid radii
+  -hist: lierhist*h.png lierhist.py
+    -shows some bimodality in dist of cliers in middle radii
+-get francesco's clier control sample
+-change color scheme
+  -done, matches francesco's 2016 papers
+
+3/26
+-get sig1, concentration from francesco
+-bulge cut
+-bimodality:
+  -look at rotation curves for diff population
+    -just looking at cLIERS vs SF (lierprofs.png): cliers have higher gas
+    rotation speed and stellar rotation speed than sf but not by much
+    -cutting in trough: log(ad^2/h^2) < -.6 at 1Re
+      -lierprofsall.png, lierprofssc: cliers below cut behave similarly to sf, 
+      cliers above have much higher rotation speeds and ad in largest bin, 
+      similar/flipped in lower bins (?)
+  -cut by mean, trough
+-pipe3d/firefly mass within a radius, surface mass density vs ad
+-kyle sees ad profile for high mass galaxies flatten out at 10^4 (slack plot)
+
+
+4/4:
+-look at velocity profiles of all of the individual galaxies in the highest
+Mag bin for each of the 4 populations (cut/no cut for clier,sf) to see if
+there are overall differences or just outliers
+-look at velocity field data for these galaxies too
+-gas rotation speed vs mag for fixed radius (tully fisher), color by sf/clier
+or by b/a galaxy or inclination tilt to see if there are separate populations
+  -difference in inclination would be due to dust obscuration lowering
+  magnitude or bad velocity measurement

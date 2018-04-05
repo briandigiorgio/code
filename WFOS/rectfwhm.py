@@ -15,7 +15,7 @@ if __name__ == "__main__":
     noises = [1000]
     shape = (len(noises), len(fwhms))
     cmap = make_cmap(len(noises), 'inferno')
-    nruns = 500
+    nruns = 50
 
     flux = np.zeros(shape)
     yerr = np.zeros(shape)
@@ -50,13 +50,14 @@ if __name__ == "__main__":
 
             counter += 1
             progtime = progressbar(counter, total, progtime)
-            
+
         plt.plot(fwhms, sn[i], c = cmap[i], label = 'Optimal Extraction')
         plt.plot(fwhms, asn[i], c = cmap[i], ls = '--',
             label = 'Aperture Sum')
             #plt.fill_between(fibers, sn[i]-yerr[i], sn[i]+yerr[i], facecolor =
             #        cmap[i], alpha = .2)
 
+    print(asn/sn)
     plt.title("S/N Ratios for Varying FWHM with Source/Background = 100")
     plt.xlabel("PSF FWHM (arcsec)")
     plt.ylabel("S/N")

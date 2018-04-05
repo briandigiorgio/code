@@ -18,7 +18,7 @@ if __name__ == '__main__':
     spx75 = loadfits('SPX-GAU-MILESHC-composite_0.75Re.fits')
     spx10 = loadfits('SPX-GAU-MILESHC-composite_1.00Re.fits')
     spx12 = loadfits('SPX-GAU-MILESHC-composite_1.25Re.fits')
-    adr = True
+    adr = False
 
     #make useful arrays
     spx = np.asarray([spx25, spx50, spx75, spx10, spx12])
@@ -30,6 +30,7 @@ if __name__ == '__main__':
     #clean up the nans in the bpt designations
     bpt = lier['BPT_C']
     bpt[np.isnan(bpt)] = np.nanmax(bpt) + 1
+    bpt[np.isnan(bpt)] = len(types) - 1
     maxbpt = int(np.max(bpt))
 
     #more useful arrays
@@ -39,7 +40,6 @@ if __name__ == '__main__':
 
     plt.figure(figsize=(8,12))
     for j in range(len(Re)):
-        print(j)
         #plt.figure(figsize=(8,12))
         #get plate/ifu data for matching
         plate = spx[j]['plate'].astype(str)
@@ -71,7 +71,6 @@ if __name__ == '__main__':
         Mi = spx[j]['elpetro_absmag'][:,5]
         Mie= spx[j]['elpetro_abmerr'][:,5]
         bad = np.where(np.isnan(np.log(harc*harce*ad*ade)))
-        print(bad, len(harc))
 
         ad = np.delete(ad, bad)
         ade = np.delete(ade, bad)
@@ -79,22 +78,21 @@ if __name__ == '__main__':
         harce = np.delete(harce, bad)
         Mi = np.delete(Mi, bad)
         Mie = np.delete(Mie, bad)
-        print(np.where(np.isnan(np.log10(harc))), len(harc))
 
         #harc[np.isnan(harc) or not harc] = 1
         if adr:
             ad = ad/harc
             ade = np.sqrt((ade/harc)**2 + ((ad*harce)/(harc**2))**2)
         fade = ade/ad
+        ade = ade/ad
         ad = np.log10(ad)
-        ade = ad * fade
+        #ade = ad * fade
 
 
         plt.subplot(321+j)
         #for k in range(maxbpt+1):
         for k in [1,2]:
-            c1 = np.delete((bpt==k)[spxtolier], bad)
-            cut = (Mi[c1] < -20)
+            cut = np.delete((bpt==k)[spxtolier], bad)
             #plt.subplot(321+k)
             plt.errorbar(Mi[cut], ad[cut], xerr=Mie[cut], yerr=ade[cut], 
                     fmt='.', c=c[k], label = types[k], alpha = .2)
@@ -102,18 +100,18 @@ if __name__ == '__main__':
                     sigma=ade[cut], maxfev= 10000)
             #print("%s: %d" % (k, np.sum(cut)))
             plt.plot(x, line(x, popt[0], popt[1]), c=c[k])
-            popts[j,k] = popt[1]
-            pcovs[j,k] = pcov[1,1]
+            popts[j,k] = popt[0]
+            pcovs[j,k] = pcov[0,0]
             #plt.legend()
-            plt.xlabel('Mi')
-            plt.ylabel('AD^2')
-            if adr:
-                plt.ylabel('AD^2/Hrot')
-            plt.title('%s Re, R^2 = %f' %(Re[j], pearsonr(Mi[cut], ad[cut])[0]))
-            plt.grid(True)
+            plt.xlabel(r'$M_i$')
+            plt.ylabel(r'$AD^2$')
             ax = plt.gca()
-            ax.set_ylim((-1,3))
-            #ax.set_ylim((0,6))
+            ax.set_ylim((0,6))
+            if adr:
+                plt.ylabel(r'$AD^2/H_{rot}$')
+                ax.set_ylim((-1,3))
+            plt.title(r'%s $R_e$' % Re[j])
+            plt.grid(True)
             #ax.set_yscale("log")
         plt.tight_layout()
         #plt.show()
@@ -127,10 +125,10 @@ if __name__ == '__main__':
                 color=c[q], alpha = .2)
         plt.grid(True)
         plt.legend(loc = 0, fontsize='small')
-        plt.xlabel('Re')
+        plt.xlabel(r'$R_e$')
         plt.ylabel('Slope')
         plt.title('Slope for Different Radii')
         ax = plt.gca()
-        ax.set_ylim((-10,3))
+        ax.set_ylim((-.5,.1))
     plt.tight_layout()
     plt.show()

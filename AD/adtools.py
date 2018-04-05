@@ -19,6 +19,7 @@ def lex(file, i=1):
     hdu = loadfits(file, i=i)
     print('\n'.join(hdu.columns.names))
     return hdu
+
 #reads fits file of data from Kyle, spits out relevant data arrays
 #should be of the form 'SPX-GAU-MILESHC-composite_*.fits'
 #largely borrowed from Kyle
@@ -92,6 +93,8 @@ def exponential(x, a, b):
     return a * b ** x
 
 def weighted_avg_std(values, weights):
+    if len(values) == 0 or len(weights) == 0 or np.sum(weights) == 0:
+        return (np.nan, np.nan) #failure
     average = np.average(values, weights=weights)
     sumweights = np.sum(weights)
     variance = np.sum((weights * (values - average)**2))/sumweights
@@ -148,4 +151,42 @@ def read_mass(file, adv = False):
     
     return m, ad, ade
 
+#loads all of the spx files for different radii and puts them in an array
+def readall(f25 = 'SPX-GAU-MILESHC-composite_0.25Re.fits',
+        f50 = 'SPX-GAU-MILESHC-composite_0.50Re.fits', 
+        f75 = 'SPX-GAU-MILESHC-composite_0.75Re.fits', 
+        f10 = 'SPX-GAU-MILESHC-composite_1.00Re.fits', 
+        f12 = 'SPX-GAU-MILESHC-composite_1.25Re.fits', others = []):
+    spx25 = loadfits(f25)
+    spx50 = loadfits(f50)
+    spx75 = loadfits(f75)
+    spx10 = loadfits(f10)
+    spx12 = loadfits(f12)
+    return np.asarray([spx25, spx50, spx75, spx10, spx12]+others)
 
+#make a cut in the ad/hrot ratio between the two populations from lierhist
+#bpt = array from francesco, cut = where to split the populations
+#group = group in bpt to split, spx = array of all Re files, 
+#r = which Re to use for the cut
+def ccut(bpt, dip, group, lier, spx, r):
+    plate = spx[r]['plate'].astype(str)
+    ifu = spx[r]['ifudesign'].astype(str)
+    plateifuspx = np.asarray([plate[i]+ifu[i] for i in range(len(plate))])
+
+    lierplate = lier['PLATE'].astype(str)
+    lierifu = lier['IFUDESIGN'].astype(str)
+    plateifulier = np.asarray([lierplate[i] + lierifu[i] 
+        for i in range(len(lierplate))])
+
+    spxtolier = np.zeros(len(plateifuspx))
+    for l in range(len(plateifuspx)):
+        for m in range(len(plateifulier)):
+            if plateifuspx[l] == plateifulier[m]:
+                spxtolier[l] = m
+    spxtolier = spxtolier.astype(int)
+
+    ad10 = spx[r]['ad2_em']
+    harc10  = spx[r]['harc_em']
+    bpt[spxtolier * (bpt[spxtolier] == group) * \
+            (np.log10(ad10/(harc10**2)) < dip)] = 6
+    #return bpt

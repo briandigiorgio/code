@@ -36,13 +36,14 @@ def gff(table, u, g2):
 def emission(nus, T):
     #calculate values relevant to gaunt
     u = (h*nus)/(kb*T)
+    inspect(u)
     g2 = ((Z**2)*ry)/(kb*T) 
+    print(g2)
 
     #read in data table (van Hoof+ 2014) and get gff values 
     table = np.loadtxt('gauntff.dat')[:146,:].flatten()
     gffs = gff(table, u, g2)
-    print(gffs)
-
+    inspect(gffs)
     #implement equation 5.14b from Rybicki & Lightman to get j
     C = ((32*e**4*h)/(12*np.pi*me**2*c**3)) * np.sqrt((np.pi*ry)/(3*kb))#5.44
     return C * n**2 * Z**2 * T**(-1/2) * np.exp((-h*nus)/(kb*T)) * gffs
@@ -58,11 +59,16 @@ def absorption(nu, T):
     C = (4*e**6)/(3*me*h*c) * np.sqrt((2*np.pi)/(3*kb*me))
     return C * T**(-1/2) * Z**2 * n**2 * nus**-3 * (1-np.exp((-h*nus)/(kb*T))) * gffs
 
+def inspect(array):
+    print(array[0], array[len(array)//2], array[-1])
+
 if __name__ == '__main__':
     #set temp, set up lambdas, calculate nus
     T = 10000
     lambdas = np.logspace(-1,1,100) * 1e-4
+    inspect(lambdas)
     nus = c/lambdas
+    inspect(nus)
 
     #calculate and plot j against lambda
     js = emission(nus,T)
@@ -76,4 +82,3 @@ if __name__ == '__main__':
     plt.annotate('T = %d K' % T, xy = (.8, .1), xycoords = 'axes fraction')
     plt.annotate(r'$N_i = N_{e^-} = $%d' % n, xy = (.8, .05), xycoords = 'axes fraction')
     plt.show()
-

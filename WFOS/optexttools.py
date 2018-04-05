@@ -27,6 +27,17 @@ def moffat(center, x, y, fwhm, beta = 2.9):
                     y_0 = center[1], gamma = alpha, alpha = beta)
     return tpsf
 
+#returns a sersic profile with a peak value of I, similar to moffat
+#sersic index n is 1 for spirals, 4 for elliptical, a is 1/e radius
+#formula from http://www.simondriver.org/Teaching/AS3011/AS3011_5.pdf
+def sersic(x, y, n, a, I=1, center=(0,0)):
+    tpsf = np.zeros((len(x),len(y)))
+    for i, xi in enumerate(x):
+        for j, yj in enumerate(y):
+            r = np.sqrt((xi-center[0])**2 + (yj-center[1])**2)
+            tpsf[i,j] = I * np.exp(-(r/a)**(1/n))
+    return tpsf
+
 def optimalextract(data, tdata, var, aperture = False):
     #method from Naylor 1998 Eqs. 9-12
     #data = observed counts in fibers, tdata = theoretical psf values
@@ -175,18 +186,18 @@ def progressbar(progress, total, progtime = 0, tlast = 0):
         return time.time()
 
 #returns a hexagonal mask array with desired radius
+#radius is from corner to corner (longer dimension of hexagon)
 def makehex(rad):
     r3 = np.sqrt(3)
     shape = (2*rad,int(r3*rad))
     hexagon = np.ones(shape)
+
+    #change pixels that are outside of hexagon
     for x in range(shape[0]):
         for y in range(shape[1]):
             if y > r3/2*rad + r3*x or y < r3/2*rad - r3*x \
             or y > -r3*x + 5*r3/2*rad or y < r3*x - 3*r3/2*rad:
                 hexagon[x,y] = 0
-    #print(hexagon)
-    #plt.imshow(hexagon)
-    #plt.show()
     return hexagon
 
 #convolve a fiber onto a psf at only one specified location
@@ -195,10 +206,10 @@ def convolve(center, fiber, psf):
     odd = (fiber.shape[0]%2, fiber.shape[1]%2) #accounts for odd dimensions
     xoffset = fiber.shape[1]//2
     yoffset = fiber.shape[0]//2
+
     #multiplies arrays together
-    product = fiber * psf[center[0]-yoffset:center[0]+yoffset+odd[0],
-            center[1]-xoffset:center[1]+xoffset+odd[1]]
-    return np.sum(product)
+    return np.sum(fiber * psf[center[0]-yoffset:center[0]+yoffset+odd[0],
+            center[1]-xoffset:center[1]+xoffset+odd[1]])
 
 #performs optimal extraction simulation using a first order hexagonal IFU
 #first order meaning 1 outer ring of fibers (7 fiber)
@@ -377,11 +388,12 @@ def makerect(w, h):
 
 #do optimal extraction on a slit with multiple pixels 
 #pixelsize given in fraction of total slit length
-def optrext(pixelsize, fwhm, npix=100, noise=50, ff=10000, a=False, m=True):
+def optrext(pixelsize, fwhm, npix=100, noise=50, ff=10000, a=False, m=True,
+        size = 1):
     #define variables
     width = .75 #width of slit in arcsec
     std = fwhm/2.355 #convert fwhm to stdev
-    size = 1 #length of slit in arcsec
+    size = size #length of slit in arcsec
     pixheight = pixelsize*npix/size #height of pixel in terms of npix pixels
 
     #make a rectangular pixel mask to convolve over psf
@@ -432,3 +444,80 @@ def optrext(pixelsize, fwhm, npix=100, noise=50, ff=10000, a=False, m=True):
 def makegrid(x, y):
     points = np.asarray(np.meshgrid(x, y, indexing = 'ij'))
     return np.swapaxes(np.swapaxes(points, 0, 1), 1, 2)
+
+#computes amount of psf flux actually captured with a given aperture mask
+def lossfrac(aperture, fwhm, m = False, psf = 'm', noise = 0, npix = 1000,
+        size = 10, trunc = 0, n=1):
+    x = np.linspace(-.5*size,.5*size,npix)
+    y = np.linspace(-.5*size,.5*size,npix)
+    
+    if psf == 'm' or  m: #moffat
+        tpsf = moffat((0,0), x, y, fwhm, 2.9)
+    elif psf == 'g': #gaussian
+        pos = [[[x[i],y[j]] for j in range(npix)] for i in range(npix)]
+        pdf = stats.multivariate_normal([0,0], [[std,0],[0,std]])
+        tpsf = pdf.pdf(pos)
+    elif psf == 's': #sersic, in this case fwhm is actually n
+        tpsf = sersic(x,y,fwhm,1)
+    else:
+        print("Input valid psf type (m for moffat, g for gaussian, s for\
+        sersic)")
+        return
+
+    tpsf = tpsf/np.sum(tpsf)
+
+    #truncate the psf after a certain radius (in arcsec) if desired
+    if trunc:
+        for xi,xs in enumerate(x):
+            for yi,ys in enumerate(y):
+                if np.sqrt(xs**2 + ys**2) > trunc:
+                    tpsf[xi,yi] = 0
+
+    return convolve((npix//2, npix//2), aperture, tpsf)
+
+#takes an input array and adds a fiber array to it at position center
+#fibers should be 0s and 1s (probably from makehex) or makerect
+def addfiber(fiber, background, center):
+    odd = (fiber.shape[0]%2, fiber.shape[1]%2) #accounts for odd dimensions
+    background[center[0]-fiber.shape[0]//2:center[0]+fiber.shape[0]//2+odd[0], 
+        center[1]-fiber.shape[1]//2:center[1]+fiber.shape[1]//2+odd[1]] += fiber
+    return background
+
+#puts together the appropriate fibers to make a bundle of specific hex fibers
+def makebundle(fibers, fibersize, npix=1000, arcsec = 100):
+    r3 = np.sqrt(3)
+    r = int(fibersize * arcsec/r3)
+    bundle = np.zeros((npix,npix))
+    fiber = makehex(r)
+    center = npix//2
+
+    if fibers not in [1,7,19]:
+        print("Please put in appropriate fiber count (1, 7, or 19)")
+        return
+
+    if fibers >= 1:
+        bundle = addfiber(fiber, bundle, (center, center))
+
+    if fibers >= 7:
+        bundle = addfiber(fiber,bundle,(center, int(center+r*r3)))
+        bundle = addfiber(fiber,bundle,(int(center+1.5*r), int(center+r*r3/2)))
+        bundle = addfiber(fiber,bundle,(int(center+1.5*r), int(center-r*r3/2)))
+        bundle = addfiber(fiber,bundle,(center, int(center-r*r3)))
+        bundle = addfiber(fiber,bundle,(int(center-1.5*r), int(center-r*r3/2)))
+        bundle = addfiber(fiber,bundle,(int(center-1.5*r), int(center+r*r3/2)))
+
+    if fibers == 19:
+        bundle = addfiber(fiber,bundle,(center, int(center+2*r*r3)))
+        bundle = addfiber(fiber,bundle,(int(center+1.5*r),int(center+1.5*r*r3)))
+        bundle = addfiber(fiber,bundle,(center+3*r, int(center+r*r3)))
+        bundle = addfiber(fiber,bundle,(center+3*r, center))
+        bundle = addfiber(fiber,bundle,(center+3*r, int(center-r*r3)))
+        bundle = addfiber(fiber,bundle,(int(center+1.5*r),int(center-1.5*r*r3)))
+        bundle = addfiber(fiber,bundle,(center, int(center-2*r*r3)))
+        bundle = addfiber(fiber,bundle,(int(center-1.5*r),int(center-1.5*r*r3)))
+        bundle = addfiber(fiber,bundle,(center-3*r, int(center-r*r3)))
+        bundle = addfiber(fiber,bundle,(center-3*r, center))
+        bundle = addfiber(fiber,bundle,(center-3*r, int(center+r*r3)))
+        bundle =addfiber(fiber,bundle,(int(center-1.5*r), int(center+1.5*r*r3)))
+
+    return bundle
